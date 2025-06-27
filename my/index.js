@@ -1,24 +1,28 @@
+const express = require('express');
 const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
+const QRCode = require('qrcode');
 const path = require('path');
+
+const app = express();
+const port = process.env.PORT || 3000;
+
+let qrCodeData = null;
 
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
     }
 });
 
-// ✅ عرض QR صغير للطرفية
-client.on('qr', (qr) => {
-    console.clear(); // يمسح الشاشة قبل عرض QR باش تبان مزيان
-    console.log('🔐 Scan the QR code below:');
-    qrcode.generate(qr, { small: true }); // small = QR صغير
+client.on('qr', async (qr) => {
+    qrCodeData = await QRCode.toDataURL(qr); // ⬅️ تحويل QR إلى صورة
+    console.log('✅ QR code ready. Go to http://localhost:3000');
 });
 
 client.on('ready', () => {
-    console.log('✅ Client is ready!');
+    console.log('✅ WhatsApp client is ready!');
 });
 
 client.on('message', async (message) => {
@@ -26,19 +30,38 @@ client.on('message', async (message) => {
         await message.reply('pong');
     }
 
-    const receivedText = message.body.toLowerCase();
-
-    if (receivedText === 'mong-tv') {
+    const text = message.body.toLowerCase();
+    if (text === 'mong-tv') {
         try {
             const apkPath = path.join(__dirname, 'files', 'Mong-tv.apk');
             const media = await MessageMedia.fromFilePath(apkPath);
-            await message.reply('📦 جارٍ إرسال تطبيق Mong-tv إليك...');
+            await message.reply('📦 جاري إرسال تطبيق Mong-tv...');
             await client.sendMessage(message.from, media);
-        } catch (error) {
-            console.error('❌ Error sending file:', error);
+        } catch (err) {
+            console.error('❌ فشل في إرسال الملف:', err);
             await message.reply('❌ حدث خطأ أثناء إرسال الملف.');
         }
     }
 });
 
 client.initialize();
+
+app.get('/', (req, res) => {
+    if (!qrCodeData) {
+        return res.send('<h2>⏳ يرجى الانتظار... يتم توليد QR Code</h2>');
+    }
+
+    res.send(`
+        <html>
+        <head><title>QR Code</title></head>
+        <body style="text-align: center; font-family: sans-serif;">
+            <h2>📱 اسحب الكود لتسجيل الدخول إلى WhatsApp</h2>
+            <img src="${qrCodeData}" />
+        </body>
+        </html>
+    `);
+});
+
+app.listen(port, () => {
+    console.log(`🌐 Server running on http://localhost:${port}`);
+});
