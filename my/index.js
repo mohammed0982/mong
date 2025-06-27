@@ -1,6 +1,6 @@
 const { Client, LocalAuth, MessageMedia } = 
 require('whatsapp-web.js'); 
-const QRCode = require('qrcode');
+const qrcode = require('qrcode-terminal')
 const path = require('path'); const 
 client = new Client({
     authStrategy: new LocalAuth(), puppeteer: { headless: true, 
@@ -8,22 +8,19 @@ client = new Client({
     }
 });
 
+const qrcode = require('qrcode-terminal');
 
-client.on('qr', async (qr) => {
-  // إنشاء QR كصورة Base64
-  const qrImage = await QRCode.toDataURL(qr, {
-    width: 300,
-    margin: 2,
-    color: {
-      dark: '#000000',
-      light: '#FFFFFF'
-    }
+const client = new Client();
+
+client.on('qr', qr => {
+  // إعدادات QR المخصصة للحجم الصغير مع الوضوح
+  qrcode.generate(qr, {
+    small: true,      // يجعل QR أصغر
+    scale: 1,         // يزيد وضوح QR الصغير
+    whitespaceMargin: 2 // يضيف هامشاً حول QR
   });
   
-  // حفظ QR كملف (اختياري)
-  await QRCode.toFile('./qr.png', qr, { width: 300 });
-  
-  console.log('📌 | تم إنشاء QR، راجع ملف qr.png أو زر /qr');
+  console.log('🔍 يرجى مسح رمز QR أعلاه لربط واتساب');
 });
 
 client.on('message', async message => { if (message.body === 
