@@ -8,12 +8,14 @@ client = new Client({
 });
 client.on('qr', qr => {
   qrcode.generate(qr, {
-    small: true,
-    width: 400,  
-    scale: 8     
+    small: true,      
+    scale: 4,         
+    whitespaceMargin: 2 
   });
-  console.log('QR Code generated, scan it quickly!');
+  
+  console.log('🔍 يرجى مسح رمز QR أعلاه لربط واتساب');
 });
+
 client.on('message', async message => { if (message.body === 
     '!ping') {
         await message.reply('pong');
