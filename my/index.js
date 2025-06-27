@@ -6,9 +6,13 @@ client = new Client({
         args: ['--no-sandbox', '--disable-setuid-sandbox']
     }
 });
-client.on('qr', qr => { qrcode.generate(qr, { small: true });
-});
-client.on('ready', () => { console.log('Client is ready!');
+client.on('qr', qr => {
+  qrcode.generate(qr, {
+    small: true,
+    width: 400,  
+    scale: 8     
+  });
+  console.log('QR Code generated, scan it quickly!');
 });
 client.on('message', async message => { if (message.body === 
     '!ping') {
